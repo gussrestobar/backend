@@ -1,0 +1,98 @@
+const express = require('express');
+const router = express.Router();
+const db = require('../config/db');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+
+// Registro
+router.post('/register', async (req, res) => {
+  const { email, password, rol, tenant_id } = req.body;
+  try {
+    await db.query(
+      'INSERT INTO users (email, password, rol, tenant_id) VALUES (?, ?, ?, ?)',
+      [email, password, rol || 'admin', tenant_id]
+    );
+    res.send({ msg: 'Usuario registrado' });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+// Login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const [rows] = await db.query('SELECT * FROM users WHERE email = ? AND password = ?', [email, password]);
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+    const user = rows[0];
+    res.json({ msg: 'Login exitoso', user });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+// Solicitud de recuperación
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expire = new Date(Date.now() + 3600000); // 1 hora
+
+    await db.query(
+      'UPDATE users SET reset_token = ?, reset_token_expire = ? WHERE email = ?',
+      [token, expire, email]
+    );
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_FROM,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const link = `http://localhost:5173/reset-password/${token}`;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: 'Recuperar contraseña',
+      html: `<p>Haz clic en el siguiente enlace para cambiar tu contraseña:</p>
+             <a href="${link}">${link}</a>
+             <p>Este enlace expirará en 1 hora.</p>`,
+    });
+
+    res.send({ msg: 'Correo enviado. Revisa tu bandeja de entrada.' });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+// Reset de contraseña
+router.post('/reset-password', async (req, res) => {
+  const { token, nuevaPassword } = req.body;
+
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM users WHERE reset_token = ? AND reset_token_expire > NOW()',
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: 'Token inválido o expirado' });
+    }
+
+    await db.query(
+      'UPDATE users SET password = ?, reset_token = NULL, reset_token_expire = NULL WHERE id = ?',
+      [nuevaPassword, rows[0].id]
+    );
+
+    res.send({ msg: 'Contraseña actualizada con éxito' });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+});
+
+module.exports = router;
