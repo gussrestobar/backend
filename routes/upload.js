@@ -23,7 +23,9 @@ const upload = multer({ storage });
 
 router.post('/', upload.single('imagen'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se subió archivo' });
-  res.json({ url: `http://localhost:3000/uploads/${req.file.filename}` });
+
+  const baseUrl = process.env.BASE_URL || 'https://backend-swqp.onrender.com'; // Usa la URL de Render en producción
+  res.json({ url: `${baseUrl}/uploads/${req.file.filename}` });
 });
 
 module.exports = router;
