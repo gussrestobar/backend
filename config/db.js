@@ -1,10 +1,11 @@
 const mysql = require('mysql2/promise');
 
 const db = mysql.createPool({
-  host: 'localhost',
+  host: 'yamanote.proxy.rlwy.net',
   user: 'root',
-  password: 'root', // sin contraseña
-  database: 'chatbot_reservas',
+  password: 'TbhyrVAQMBbZJjAKrWqbvBFVaVTiZvNm',
+  database: 'railway',
+  port: 31720
 });
 
 module.exports = db;
