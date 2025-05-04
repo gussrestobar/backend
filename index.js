@@ -17,3 +17,7 @@ app.use('/api', exampleRoutes);
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en puerto ${PORT}`);
 });
+
+app.get('/', (req, res) => {
+  res.send('Backend en funcionamiento');
+});
