@@ -2,6 +2,41 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
+// Obtener resumen de reservas por tenant
+router.get('/resumen/:tenant_id', async (req, res) => {
+  const { tenant_id } = req.params;
+  try {
+    // Obtener total de reservas para hoy
+    const [reservasHoy] = await db.query(
+      'SELECT COUNT(*) as total FROM reservas WHERE tenant_id = ? AND fecha = CURDATE()',
+      [tenant_id]
+    );
+
+    // Obtener total de mesas disponibles
+    const [mesasDisponibles] = await db.query(
+      `SELECT COUNT(*) as total FROM mesas m
+       LEFT JOIN reservas r ON m.id = r.mesa_id AND r.fecha = CURDATE()
+       WHERE m.tenant_id = ? AND r.id IS NULL`,
+      [tenant_id]
+    );
+
+    // Obtener total de reservas del mes
+    const [reservasMes] = await db.query(
+      'SELECT COUNT(*) as total FROM reservas WHERE tenant_id = ? AND MONTH(fecha) = MONTH(CURDATE())',
+      [tenant_id]
+    );
+
+    res.send({
+      reservas: reservasHoy[0].total,
+      mesas: mesasDisponibles[0].total,
+      total: reservasMes[0].total
+    });
+  } catch (err) {
+    console.error('Error al obtener resumen:', err);
+    res.status(500).send({ error: 'Error al obtener resumen' });
+  }
+});
+
 // Obtener reservas por tenant
 router.get('/:tenant_id', async (req, res) => {
   const { tenant_id } = req.params;
