@@ -13,7 +13,16 @@ const mesasRoutes = require('./routes/mesas');
 dotenv.config();
 const app = express();
 
-app.use(cors());
+// Configuración de CORS
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://gussrestobar.netlify.app', 'https://backend-swqp.onrender.com']
+    : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/api/users', userRoutes);
