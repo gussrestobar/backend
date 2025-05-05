@@ -25,6 +25,16 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Middleware para manejar errores
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({
+    error: 'Algo salió mal en el servidor',
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// Rutas
 app.use('/api/users', userRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -33,6 +43,12 @@ app.use('/api/reservas', reservasRoutes);
 app.use('/api/tenants', tenantsRoutes);
 app.use('/api/mesas', mesasRoutes);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor backend corriendo en http://localhost:${PORT}`));
+// Servir archivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`CORS configurado para: ${corsOptions.origin}`);
+});

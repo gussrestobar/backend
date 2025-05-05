@@ -5,10 +5,16 @@ const db = require('../config/db');
 router.get('/', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT id, nombre FROM tenants');
+    if (!rows) {
+      return res.status(404).send({ error: 'No se encontraron sucursales' });
+    }
     res.send(rows);
   } catch (err) {
     console.error('Error al obtener sucursales:', err);
-    res.status(500).send({ error: 'Error al obtener sucursales' });
+    res.status(500).send({ 
+      error: 'Error al obtener sucursales',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
@@ -20,9 +26,11 @@ router.get('/:id', async (req, res) => {
     res.send(rows[0]);
   } catch (err) {
     console.error('Error al obtener la sucursal:', err);
-    res.status(500).send({ error: 'Error al obtener la sucursal' });
+    res.status(500).send({ 
+      error: 'Error al obtener la sucursal',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
-
 
 module.exports = router;
