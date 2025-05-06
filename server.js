@@ -9,6 +9,7 @@ const path = require('path');
 const reservasRoutes = require('./routes/reservas');
 const tenantsRoutes = require('./routes/tenants');
 const mesasRoutes = require('./routes/mesas');
+const dashboardRoutes = require('./routes/dashboard');
 
 dotenv.config();
 const app = express();
@@ -24,6 +25,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Middleware para manejar errores
 app.use((err, req, res, next) => {
@@ -42,6 +44,7 @@ app.use('/api/categorias', categoriaRoutes);
 app.use('/api/reservas', reservasRoutes);
 app.use('/api/tenants', tenantsRoutes);
 app.use('/api/mesas', mesasRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Servir archivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
