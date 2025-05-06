@@ -11,34 +11,105 @@ router.get('/:tenant_id', async (req, res) => {
 
 // Crear reserva
 router.post('/', async (req, res) => {
-  const { cliente_nombre, personas, fecha, hora, estado, tenant_id } = req.body;
+  const { cliente_nombre, personas, fecha, hora, estado, tenant_id, mesa_id } = req.body;
 
-  await db.query(
-    'INSERT INTO reservas (cliente_nombre, personas, fecha, hora, estado, tenant_id) VALUES (?, ?, ?, ?, ?, ?)',
-    [cliente_nombre, personas, fecha, hora, estado || 'pendiente', tenant_id]
-  );
+  try {
+    // Iniciar transacción
+    await db.query('START TRANSACTION');
 
-  res.send({ msg: 'Reserva registrada' });
+    // Insertar la reserva
+    await db.query(
+      'INSERT INTO reservas (cliente_nombre, personas, fecha, hora, estado, tenant_id, mesa_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [cliente_nombre, personas, fecha, hora, estado || 'pendiente', tenant_id, mesa_id]
+    );
+
+    // Actualizar el estado de la mesa
+    await db.query(
+      'UPDATE mesas SET estado = "ocupada" WHERE id = ?',
+      [mesa_id]
+    );
+
+    // Confirmar transacción
+    await db.query('COMMIT');
+
+    res.send({ msg: 'Reserva registrada' });
+  } catch (err) {
+    // Revertir transacción en caso de error
+    await db.query('ROLLBACK');
+    console.error('Error al crear reserva:', err);
+    res.status(500).send({ error: 'Error al crear reserva' });
+  }
 });
 
 // Editar reserva
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { cliente_nombre, personas, fecha, hora, estado, tenant_id } = req.body;
+  const { cliente_nombre, personas, fecha, hora, estado, tenant_id, mesa_id } = req.body;
 
-  await db.query(
-    'UPDATE reservas SET cliente_nombre = ?, personas = ?, fecha = ?, hora = ?, estado = ?, tenant_id = ? WHERE id = ?',
-    [cliente_nombre, personas, fecha, hora, estado || 'pendiente', tenant_id, id]
-  );
+  try {
+    // Iniciar transacción
+    await db.query('START TRANSACTION');
 
-  res.send({ msg: 'Reserva actualizada' });
+    // Obtener la mesa anterior
+    const [reservaAnterior] = await db.query('SELECT mesa_id FROM reservas WHERE id = ?', [id]);
+    const mesaAnteriorId = reservaAnterior[0]?.mesa_id;
+
+    // Actualizar la reserva
+    await db.query(
+      'UPDATE reservas SET cliente_nombre = ?, personas = ?, fecha = ?, hora = ?, estado = ?, tenant_id = ?, mesa_id = ? WHERE id = ?',
+      [cliente_nombre, personas, fecha, hora, estado || 'pendiente', tenant_id, mesa_id, id]
+    );
+
+    // Liberar la mesa anterior si existe
+    if (mesaAnteriorId) {
+      await db.query('UPDATE mesas SET estado = "disponible" WHERE id = ?', [mesaAnteriorId]);
+    }
+
+    // Actualizar el estado de la nueva mesa
+    await db.query('UPDATE mesas SET estado = "ocupada" WHERE id = ?', [mesa_id]);
+
+    // Confirmar transacción
+    await db.query('COMMIT');
+
+    res.send({ msg: 'Reserva actualizada' });
+  } catch (err) {
+    // Revertir transacción en caso de error
+    await db.query('ROLLBACK');
+    console.error('Error al actualizar reserva:', err);
+    res.status(500).send({ error: 'Error al actualizar reserva' });
+  }
 });
 
 // Eliminar reserva
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-  await db.query('DELETE FROM reservas WHERE id = ?', [id]);
-  res.send({ msg: 'Reserva eliminada' });
+  
+  try {
+    // Iniciar transacción
+    await db.query('START TRANSACTION');
+
+    // Obtener la mesa de la reserva
+    const [reserva] = await db.query('SELECT mesa_id FROM reservas WHERE id = ?', [id]);
+    const mesaId = reserva[0]?.mesa_id;
+
+    // Eliminar la reserva
+    await db.query('DELETE FROM reservas WHERE id = ?', [id]);
+
+    // Liberar la mesa si existe
+    if (mesaId) {
+      await db.query('UPDATE mesas SET estado = "disponible" WHERE id = ?', [mesaId]);
+    }
+
+    // Confirmar transacción
+    await db.query('COMMIT');
+
+    res.send({ msg: 'Reserva eliminada' });
+  } catch (err) {
+    // Revertir transacción en caso de error
+    await db.query('ROLLBACK');
+    console.error('Error al eliminar reserva:', err);
+    res.status(500).send({ error: 'Error al eliminar reserva' });
+  }
 });
 
 // Obtener resumen de reservas por tenant

@@ -7,7 +7,7 @@ const uploadsDir = 'uploads';
 
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
-  }
+}
 
 // Almacenamiento en carpeta local
 const storage = multer.diskStorage({
