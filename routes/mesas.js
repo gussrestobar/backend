@@ -28,26 +28,12 @@ router.get('/disponibles/:tenant_id', async (req, res) => {
   }
 
   try {
-    // Convertir la hora a número para determinar el turno
-    const horaNum = parseInt(hora.split(':')[0]);
-    const turno = horaNum < 12 ? 'mañana' : 'tarde';
-
     const [rows] = await db.query(`
-      SELECT DISTINCT m.* 
+      SELECT m.* 
       FROM mesas m
       WHERE m.tenant_id = ? 
         AND m.estado = 'disponible'
-        AND m.id NOT IN (
-          SELECT mesa_id 
-          FROM reservas 
-          WHERE fecha = ? 
-            AND estado != 'cancelada'
-            AND (
-              (HOUR(hora) < 12 AND ? = 'mañana') OR 
-              (HOUR(hora) >= 12 AND ? = 'tarde')
-            )
-        )
-    `, [tenant_id, fecha, turno, turno]);
+    `, [tenant_id]);
 
     res.send(rows);
   } catch (err) {
