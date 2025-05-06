@@ -30,17 +30,20 @@ router.get('/disponibles/:tenant_id', async (req, res) => {
     const [rows] = await db.query(`
       SELECT m.* 
       FROM mesas m
-      LEFT JOIN reservas r ON m.id = r.mesa_id 
-        AND r.fecha = ? 
-        AND r.estado != 'cancelada'
-        AND (
-          (HOUR(r.hora) < 12 AND ? = 'mañana') OR 
-          (HOUR(r.hora) >= 12 AND ? = 'tarde')
-        )
       WHERE m.tenant_id = ? 
         AND m.estado = 'disponible'
-        AND r.id IS NULL
-    `, [fecha, turno, turno, tenant_id]);
+        AND NOT EXISTS (
+          SELECT 1 
+          FROM reservas r 
+          WHERE r.mesa_id = m.id 
+            AND r.fecha = ? 
+            AND r.estado != 'cancelada'
+            AND (
+              (HOUR(r.hora) < 12 AND ? = 'mañana') OR 
+              (HOUR(r.hora) >= 12 AND ? = 'tarde')
+            )
+        )
+    `, [tenant_id, fecha, turno, turno]);
 
     res.send(rows);
   } catch (err) {
