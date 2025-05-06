@@ -22,6 +22,11 @@ router.get('/disponibles/:tenant_id', async (req, res) => {
   const { tenant_id } = req.params;
   const { fecha, hora } = req.query;
 
+  // Validar que los parámetros requeridos estén presentes
+  if (!fecha || !hora) {
+    return res.status(400).send({ error: 'Se requieren fecha y hora' });
+  }
+
   try {
     // Convertir la hora a número para determinar el turno
     const horaNum = parseInt(hora.split(':')[0]);
