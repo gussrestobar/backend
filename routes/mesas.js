@@ -32,11 +32,13 @@ router.get('/disponibles/:tenant_id', async (req, res) => {
       FROM mesas m
       LEFT JOIN reservas r ON m.id = r.mesa_id 
         AND r.fecha = ? 
-        AND (
-          (HOUR(r.hora) < 12 AND ? = 'mañana') OR 
-          (HOUR(r.hora) >= 12 AND ? = 'tarde')
-        )
         AND r.estado != 'cancelada'
+        AND (
+          -- Si es turno mañana, verificar que no haya reserva en la mañana
+          (? = 'mañana' AND HOUR(r.hora) < 12) OR
+          -- Si es turno tarde, verificar que no haya reserva en la tarde
+          (? = 'tarde' AND HOUR(r.hora) >= 12)
+        )
       WHERE m.tenant_id = ? 
         AND m.estado = 'disponible'
         AND r.id IS NULL
