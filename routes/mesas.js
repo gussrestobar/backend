@@ -17,17 +17,32 @@ router.get('/:tenant_id', async (req, res) => {
   }
 });
 
-// Obtener mesas disponibles (sin reserva) por tenant
+// Obtener mesas disponibles por tenant
 router.get('/disponibles/:tenant_id', async (req, res) => {
   const { tenant_id } = req.params;
+  const { fecha, hora } = req.query;
+
   try {
-    const [mesas] = await db.query(
-      `SELECT m.* FROM mesas m
-       LEFT JOIN reservas r ON m.id = r.mesa_id AND r.fecha = CURDATE()
-       WHERE m.tenant_id = ? AND m.estado = 'disponible' AND (r.id IS NULL OR r.estado = 'cancelada')`,
-      [tenant_id]
-    );
-    res.json(mesas);
+    // Convertir la hora a número para determinar el turno
+    const horaNum = parseInt(hora.split(':')[0]);
+    const turno = horaNum < 12 ? 'mañana' : 'tarde';
+
+    const [rows] = await db.query(`
+      SELECT m.* 
+      FROM mesas m
+      LEFT JOIN reservas r ON m.id = r.mesa_id 
+        AND r.fecha = ? 
+        AND (
+          (HOUR(r.hora) < 12 AND ? = 'mañana') OR 
+          (HOUR(r.hora) >= 12 AND ? = 'tarde')
+        )
+        AND r.estado != 'cancelada'
+      WHERE m.tenant_id = ? 
+        AND m.estado = 'disponible'
+        AND r.id IS NULL
+    `, [fecha, turno, turno, tenant_id]);
+
+    res.send(rows);
   } catch (err) {
     console.error('Error al obtener mesas disponibles:', err);
     res.status(500).send({ error: 'Error al obtener mesas disponibles' });

@@ -8,6 +8,12 @@ const crypto = require('crypto');
 router.post('/register', async (req, res) => {
   const { email, password, rol, tenant_id } = req.body;
   try {
+    // Verificar si el correo ya existe
+    const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (existingUsers.length > 0) {
+      return res.status(400).send({ error: 'El correo electrónico ya está registrado' });
+    }
+
     await db.query(
       'INSERT INTO users (email, password, rol, tenant_id) VALUES (?, ?, ?, ?)',
       [email, password, rol || 'admin', tenant_id]
