@@ -5,44 +5,67 @@ const db = require('../config/db');
 // Obtener estadísticas del dashboard
 router.get('/estadisticas/:tenant_id', async (req, res) => {
   const { tenant_id } = req.params;
+  console.log('Obteniendo estadísticas para tenant_id:', tenant_id);
 
   try {
-    // Obtener total de reservas (excluyendo canceladas)
-    const [reservas] = await db.query(`
-      SELECT COUNT(*) as total_reservas 
-      FROM reservas 
-      WHERE tenant_id = ? 
-        AND estado != 'cancelada'
-    `, [tenant_id]);
+    // Verificar la conexión a la base de datos
+    const connection = await db.getConnection();
+    console.log('Conexión a la base de datos establecida');
 
-    // Obtener total de mesas
-    const [mesas] = await db.query(`
-      SELECT COUNT(*) as total_mesas 
-      FROM mesas 
-      WHERE tenant_id = ?
-    `, [tenant_id]);
+    try {
+      // Obtener total de reservas (excluyendo canceladas)
+      const [reservas] = await connection.query(`
+        SELECT COUNT(*) as total_reservas 
+        FROM reservas 
+        WHERE tenant_id = ? 
+          AND estado != 'cancelada'
+      `, [tenant_id]);
+      console.log('Resultado de reservas:', reservas);
 
-    // Obtener total de platos
-    const [platos] = await db.query(`
-      SELECT COUNT(*) as total_platos 
-      FROM platos 
-      WHERE tenant_id = ?
-    `, [tenant_id]);
+      // Obtener total de mesas
+      const [mesas] = await connection.query(`
+        SELECT COUNT(*) as total_mesas 
+        FROM mesas 
+        WHERE tenant_id = ?
+      `, [tenant_id]);
+      console.log('Resultado de mesas:', mesas);
 
-    console.log('Resultados de las consultas:', {
-      reservas: reservas[0].total_reservas,
-      mesas: mesas[0].total_mesas,
-      platos: platos[0].total_platos
-    });
+      // Obtener total de platos
+      const [platos] = await connection.query(`
+        SELECT COUNT(*) as total_platos 
+        FROM platos 
+        WHERE tenant_id = ?
+      `, [tenant_id]);
+      console.log('Resultado de platos:', platos);
 
-    res.send({
-      total_reservas: reservas[0].total_reservas,
-      total_mesas: mesas[0].total_mesas,
-      total_platos: platos[0].total_platos
-    });
+      // Verificar que los resultados existan
+      if (!reservas || !mesas || !platos) {
+        throw new Error('Error al obtener los resultados de las consultas');
+      }
+
+      // Verificar que los resultados tengan la estructura esperada
+      if (!reservas[0] || !mesas[0] || !platos[0]) {
+        throw new Error('Los resultados no tienen la estructura esperada');
+      }
+
+      const response = {
+        total_reservas: reservas[0].total_reservas || 0,
+        total_mesas: mesas[0].total_mesas || 0,
+        total_platos: platos[0].total_platos || 0
+      };
+
+      console.log('Respuesta final:', response);
+      res.send(response);
+    } finally {
+      // Liberar la conexión
+      connection.release();
+    }
   } catch (err) {
     console.error('Error al obtener estadísticas:', err);
-    res.status(500).send({ error: 'Error al obtener estadísticas' });
+    res.status(500).send({ 
+      error: 'Error al obtener estadísticas',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
