@@ -24,7 +24,7 @@ router.get('/disponibles/:tenant_id', async (req, res) => {
     const [mesas] = await db.query(
       `SELECT m.* FROM mesas m
        LEFT JOIN reservas r ON m.id = r.mesa_id AND r.fecha = CURDATE()
-       WHERE m.tenant_id = ? AND (r.id IS NULL OR m.estado = 'disponible')`,
+       WHERE m.tenant_id = ? AND m.estado = 'disponible' AND (r.id IS NULL OR r.estado = 'cancelada')`,
       [tenant_id]
     );
     res.json(mesas);
