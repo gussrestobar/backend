@@ -19,7 +19,23 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+// Filtro de archivos
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten archivos JPG y PNG'), false);
+  }
+};
+
+const upload = multer({ 
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // límite de 5MB
+  }
+});
 
 router.post('/', upload.single('imagen'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se subió archivo' });

@@ -30,10 +30,10 @@ router.get('/estadisticas/:tenant_id', async (req, res) => {
       `, [tenant_id]);
       console.log('Resultado de mesas:', mesas);
 
-      // Obtener total de platos
+      // Obtener total de platos (usando menu_items)
       const [platos] = await connection.query(`
         SELECT COUNT(*) as total_platos 
-        FROM platos 
+        FROM menu_items 
         WHERE tenant_id = ?
       `, [tenant_id]);
       console.log('Resultado de platos:', platos);
