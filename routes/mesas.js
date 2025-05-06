@@ -20,25 +20,16 @@ router.get('/:tenant_id', async (req, res) => {
 // Obtener mesas disponibles por tenant
 router.get('/disponibles/:tenant_id', async (req, res) => {
   const { tenant_id } = req.params;
-  const { fecha, hora } = req.query;
-
-  // Validar que los parámetros requeridos estén presentes
-  if (!fecha || !hora) {
-    return res.status(400).send({ error: 'Se requieren fecha y hora' });
-  }
 
   try {
     const [rows] = await db.query(`
-      SELECT m.* 
-      FROM mesas m
-      WHERE m.tenant_id = ? 
-        AND m.estado = 'disponible'
+      SELECT * FROM mesas WHERE tenant_id = ?
     `, [tenant_id]);
 
     res.send(rows);
   } catch (err) {
-    console.error('Error al obtener mesas disponibles:', err);
-    res.status(500).send({ error: 'Error al obtener mesas disponibles' });
+    console.error('Error al obtener mesas:', err);
+    res.status(500).send({ error: 'Error al obtener mesas' });
   }
 });
 
