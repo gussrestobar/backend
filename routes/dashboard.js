@@ -7,7 +7,7 @@ router.get('/estadisticas/:tenant_id', async (req, res) => {
   const { tenant_id } = req.params;
 
   try {
-    // Obtener total de reservas
+    // Obtener total de reservas (excluyendo canceladas)
     const [reservas] = await db.query(`
       SELECT COUNT(*) as total_reservas 
       FROM reservas 
@@ -28,6 +28,12 @@ router.get('/estadisticas/:tenant_id', async (req, res) => {
       FROM platos 
       WHERE tenant_id = ?
     `, [tenant_id]);
+
+    console.log('Resultados de las consultas:', {
+      reservas: reservas[0].total_reservas,
+      mesas: mesas[0].total_mesas,
+      platos: platos[0].total_platos
+    });
 
     res.send({
       total_reservas: reservas[0].total_reservas,
