@@ -10,13 +10,9 @@ const reservasRoutes = require('./routes/reservas');
 const tenantsRoutes = require('./routes/tenants');
 const mesasRoutes = require('./routes/mesas');
 const dashboardRoutes = require('./routes/dashboard');
-const initDatabase = require('./config/init');
 
 dotenv.config();
 const app = express();
-
-// Inicializar la base de datos
-initDatabase();
 
 // Configuración de CORS
 const corsOptions = {
