@@ -18,7 +18,7 @@ const app = express();
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://gussrestobar.netlify.app', 'https://backend-swqp.onrender.com']
-    : '*',
+    : ['http://localhost:5174', 'http://localhost:5173', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 };
