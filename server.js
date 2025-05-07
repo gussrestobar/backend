@@ -17,10 +17,15 @@ const app = express();
 // Configuración de CORS
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://gussrestobar.netlify.app', 'https://backend-swqp.onrender.com']
+    ? [
+        'https://gussrestobar.netlify.app',
+        'https://admi-gussrestobar.netlify.app',
+        'https://backend-swqp.onrender.com'
+      ]
     : ['http://localhost:5174', 'http://localhost:5173', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 };
 
 app.use(cors(corsOptions));
@@ -53,5 +58,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
   console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
-  console.log(`CORS configurado para: ${corsOptions.origin}`);
+  console.log('CORS configurado para los dominios:', corsOptions.origin);
 });
