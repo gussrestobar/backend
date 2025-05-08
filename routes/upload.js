@@ -14,9 +14,13 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// Ruta para subir una imagen
+// Ruta para subir una imagen con logs detallados
 router.post('/', upload.single('imagen'), (req, res) => {
-  // La URL de la imagen subida está en req.file.path
+  console.log('Archivo recibido:', req.file);
+  if (!req.file) {
+    console.error('No se subió archivo');
+    return res.status(400).json({ error: 'No se subió archivo' });
+  }
   res.json({ url: req.file.path });
 });
 
