@@ -14,14 +14,21 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// Ruta para subir una imagen con logs detallados
-router.post('/', upload.single('imagen'), (req, res) => {
-  console.log('Archivo recibido:', req.file);
-  if (!req.file) {
-    console.error('No se subió archivo');
-    return res.status(400).json({ error: 'No se subió archivo' });
-  }
-  res.json({ url: req.file.path });
+// Ruta para subir una imagen con manejo de errores detallado
+router.post('/', (req, res, next) => {
+  upload.single('imagen')(req, res, function (err) {
+    if (err) {
+      // Mostrar el error real en los logs
+      console.error('Error al subir imagen:', err);
+      return res.status(500).json({ error: err.message || 'Error al subir imagen' });
+    }
+    console.log('Archivo recibido:', req.file);
+    if (!req.file) {
+      console.error('No se subió archivo');
+      return res.status(400).json({ error: 'No se subió archivo' });
+    }
+    res.json({ url: req.file.path });
+  });
 });
 
 module.exports = router;
