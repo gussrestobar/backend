@@ -20,12 +20,14 @@ const corsOptions = {
     ? [
         'https://gussrestobar.netlify.app',
         'https://admi-gussrestobar.netlify.app',
-        'https://backend-swqp.onrender.com'
+        'https://backend-swqp.onrender.com',
+        'https://cliente-gussrestobar.netlify.app'
       ]
     : ['http://localhost:5174', 'http://localhost:5173', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
 app.use(cors(corsOptions));

@@ -59,8 +59,11 @@ router.post('/forgot-password', async (req, res) => {
       },
     });
 
-    // Asegurar que FRONTEND_URL no termine con /
-    const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, '');
+    // Usar el nuevo dominio para el panel de administración
+    const frontendUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://admi-gussrestobar.netlify.app'
+      : 'http://localhost:5173';
+
     const link = `${frontendUrl}/reset-password/${token}`;
 
     await transporter.sendMail({
