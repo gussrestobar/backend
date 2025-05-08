@@ -20,15 +20,21 @@ const corsOptions = {
     ? [
         'https://gussrestobar.netlify.app',
         'https://admi-gussrestobar.netlify.app',
-        'https://backend-swqp.onrender.com',
-        'https://cliente-gussrestobar.netlify.app'
+        'https://backend-swqp.onrender.com'
       ]
     : ['http://localhost:5174', 'http://localhost:5173', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
+
+// Forzar modo producción si estamos en render.com
+if (process.env.RENDER) {
+  process.env.NODE_ENV = 'production';
+}
 
 app.use(cors(corsOptions));
 app.use(express.json());
